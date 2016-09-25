@@ -10,6 +10,7 @@ var gameService = require('./app/services/game.service');
 
 var gameCheckRule = new schedule.RecurrenceRule();
 gameCheckRule.hour = 1;
+gameCheckRule.minute = 0;
 
 var gameJob = schedule.scheduleJob(gameCheckRule, function () {
     console.log('Checking for games today...');
