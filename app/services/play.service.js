@@ -1,13 +1,8 @@
-module.exports = function (cfb) {
+module.exports = function (cfb, gameId) {
     var self = this;
     self.cfb = cfb;
-    self.gameId = null;
-    self.timestamp = Date.now();
-
-    self.setGameId = function (id) {
-        self.reset();
-        self.gameId = id;
-    };
+    self.gameId = gameId;
+    self.timestamp = new Date();
 
     self.getNewPlays = function (callback) {
         if (self.gameId) {
@@ -27,7 +22,7 @@ module.exports = function (cfb) {
                     }
 
                     for (drive in drives) {
-                        if (drive.plays) {
+                        if (drives[drive].plays) {
                             for (playIndex in drives[drive].plays) {
                                 var play = drives[drive].plays[playIndex];
                                 var playDate = new Date(play.wallclock);
@@ -48,7 +43,6 @@ module.exports = function (cfb) {
                                     } else {
                                         var text = getFinalText(play, data);
                                         playList.push(text);
-                                        self.reset();
                                     }
                                 }
                             }
@@ -65,16 +59,16 @@ module.exports = function (cfb) {
         }
     };
 
-    self.reset = function () {
-        self.gameId = null;
-        self.timestamp = Date.now();
-    };
-
     var getPlayText = function (play, data) {
         var team = play.start.team.id == data.teams[0].id ? data.teams[0].team.abbreviation : data.teams[1].team.abbreviation;
-        var downDistance = play.start.downDistanceText
-            .replace(' and ', '&')
-            .replace('at', '@');
+        var downDistance = '';
+
+        if (play.start.downDistanceText) {
+            downDistance = play.start.downDistanceText
+                .replace(' and ', '&')
+                .replace('at', '@');
+        }
+
         var playText = play.text;
 
         return team + ' ' + downDistance + ': ' + playText;

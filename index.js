@@ -6,18 +6,39 @@ var bot = require('./app/bot');
 var playService = require('./app/services/play.service');
 var tweetService = require('./app/services/tweet.service');
 
-var plays = new playService(cfb);
-plays.setGameId(400869658);
+var gameService = require('./app/services/game.service');
 
-var tweeter = new tweetService(bot, plays);
-tweeter.setHashTag(config.hashTag);
+var gameCheckRule = new schedule.RecurrenceRule();
+gameCheckRule.hour = 1;
 
-var rule = new schedule.RecurrenceRule();
-rule.year = 2016;
-rule.month = 8;
-rule.date = 24;
-rule.hour = schedule.Range(15,18);
+var gameJob = schedule.scheduleJob(gameCheckRule, function () {
+    console.log('Checking for games today...');
 
-var j = schedule.scheduleJob(rule, function(){
-    tweeter.sendTweets();
+    var games = new gameService(cfb, config.teamId);
+    games.gameCheck(function (event) {
+        console.log('Scheduling game for today...');
+
+        var plays = new playService(cfb, event.id);
+        var tweeter = new tweetService(bot, plays);
+
+        var hashTag = event.competitions[0].competitors[1].team.abbreviation + 'vs' + event.competitions[0].competitors[0].team.abbreviation;
+        tweeter.setHashTag(hashTag);
+
+        var eventDate = new Date(event.date);
+        var startHour = eventDate.getHours();
+        var endHour = startHour + 4;
+
+        var tweetRule = new schedule.RecurrenceRule();
+        tweetRule.year = eventDate.getFullYear();
+        tweetRule.month = eventDate.getMonth();
+        tweetRule.date = eventDate.getDate();
+        tweetRule.hour = schedule.Range(startHour, endHour);
+
+        var tweetJob = schedule.scheduleJob(tweetRule, function () {
+            console.log('Looking for plays and sending tweets...');
+            tweeter.sendTweets();
+        });
+    });
 });
+
+console.log('Ready to tweet!');
