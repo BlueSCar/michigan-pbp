@@ -42,7 +42,7 @@ var gameJob = schedule.scheduleJob(gameCheckRule, function () {
         tweetRule.month = eventDate.getMonth();
         tweetRule.date = eventDate.getDate();
         tweetRule.hour = new schedule.Range(startHour, endHour);
-	console.log(tweetRule.hour);
+	    tweetRule.second = [0, 15, 30, 45];
 
         var tweetJob = schedule.scheduleJob(tweetRule, function () {
             console.log('Looking for plays and sending tweets...');
