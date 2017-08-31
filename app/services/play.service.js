@@ -1,67 +1,79 @@
-module.exports = function (cfb, gameId) {
-    var self = this;
+module.exports = (cfb, gameId) => {
+    let self = this;
     self.cfb = cfb;
     self.gameId = gameId;
-    self.timestamp = new Date();
+    self.quarter = 0;
+    self.seconds = 60 * 15;
 
-    self.getNewPlays = function (callback) {
+    self.getNewPlays = () => {
         if (self.gameId) {
-            cfb.games.getPlayByPlay(self.gameId, function (data) {
-                var playList = [];
-                var newTimestamp = self.timestamp;
+            return cfb.games
+                .getPlayByPlay(self.gameId)
+                .then(formatData);
+        }
+    };
 
-                if (data.drives) {
-                    var drives = [];
+    let formatData = (data) => {
+        let playList = [];
+        let newQuarter = self.quarter;
+        let newSeconds = self.seconds;
 
-                    if (data.drives.previous) {
-                        drives = drives.concat(data.drives.previous);
-                    }
+        if (data.drives) {
+            let drives = [];
 
-                    if (data.drives.current) {
-                        drives = drives.concat(data.drives.current);
-                    }
+            if (data.drives.previous) {
+                drives = drives.concat(data.drives.previous);
+            }
 
-                    for (drive in drives) {
-                        if (drives[drive].plays) {
-                            for (playIndex in drives[drive].plays) {
-                                var play = drives[drive].plays[playIndex];
-                                var playDate = new Date(play.wallclock);
+            if (data.drives.current) {
+                drives = drives.concat(data.drives.current);
+            }
 
-                                if (playDate > self.timestamp) {
-                                    if (play.type.id != 66) {
-                                        var text = getPlayText(play, data);
-                                        playList.push(text);
+            for (let drive of drives) {
+                if (drive.plays) {
+                    for (let play of drive.plays) {
+                        let playQuarter = play.period.number;
+                        let tokens = play.clock.displayValue.split(':');
+                        let playSeconds = tokens[0] * 60 + tokens[1] * 1;
 
-                                        if (newTimestamp < playDate) {
-                                            newTimestamp = playDate;
-                                        }
+                        if (playQuarter > self.quarter || playSeconds < self.seconds) {
+                            if (play.type.id != 66) {
+                                let text = getPlayText(play, data);
+                                playList.push(text);
 
-                                        if (play.start.team.id != play.end.team.id && play.type.id != 66) {
-                                            var text = getEndOfDriveInfo(play, data);
-                                            playList.push(text);
-                                        }
-                                    } else {
-                                        var text = getFinalText(play, data);
-                                        playList.push(text);
-                                    }
+                                if (newQuarter < playQuarter) {
+                                    newQuarter = playQuarter;
                                 }
+
+                                if (newQuarter == playQuarter && newSeconds > playSeconds){
+                                    newSeconds = playSeconds;
+                                }
+
+                                if (play.start.team.id != play.end.team.id && play.type.id != 66) {
+                                    let text = getEndOfDriveInfo(play, data);
+                                    playList.push(text);
+                                }
+                            } else {
+                                let text = getFinalText(play, data);
+                                playList.push(text);
                             }
                         }
                     }
                 }
-
-                callback(playList);
-
-                if (self.gameId) {
-                    self.timestamp = newTimestamp;
-                }
-            });
+            }
         }
-    };
 
-    var getPlayText = function (play, data) {
-        var team = play.start.team.id == data.teams[0].id ? data.teams[0].team.abbreviation : data.teams[1].team.abbreviation;
-        var downDistance = '';
+        if (self.gameId) {
+            self.quarter = newQuarter
+            self.seconds == newSeconds;
+        }
+
+        return new Promise((resolve) => resolve(playList));
+    }
+
+    let getPlayText = (play, data) => {
+        let team = play.start.team.id == data.teams[0].id ? data.teams[0].team.abbreviation : data.teams[1].team.abbreviation;
+        let downDistance = '';
 
         if (play.start.downDistanceText) {
             downDistance = play.start.downDistanceText
@@ -69,36 +81,36 @@ module.exports = function (cfb, gameId) {
                 .replace('at', '@');
         }
 
-        var playText = play.text;
+        let playText = play.text;
 
-        return team + ' ' + downDistance + ': ' + playText;
+        return `${team} ${downDistance}: ${playText}`;
     };
 
-    var getEndOfDriveInfo = function (play, data) {
-        var clock = play.clock.displayValue;
-        var quarter = 'Q' + play.period.number;
-        var score = getGameScore(play, data);
+    let getEndOfDriveInfo = (play, data) => {
+        let clock = play.clock.displayValue;
+        let quarter = `Q${play.period.number}`;
+        let score = getGameScore(play, data);
 
-        return quarter + ' ' + clock + ' - ' + score;
+        return `${quarter} ${clock} - ${score}`;
     };
 
-    var getFinalText = function (play, data) {
-        var score = getGameScore(play, data);
-        return "FINAL: " + score;
+    let getFinalText = (play, data) => {
+        let score = getGameScore(play, data);
+        return `FINAL: ${score}`;
     };
 
-    var getGameScore = function (play, data) {
-        var homeScore;
-        var awayScore;
+    let getGameScore = (play, data) => {
+        let homeScore;
+        let awayScore;
 
         if (data.teams[0].homeAway == 'home') {
-            homeScore = data.teams[0].team.abbreviation + ' ' + play.homeScore;
-            awayScore = data.teams[1].team.abbreviation + ' ' + play.awayScore;
+            homeScore = `${data.teams[0].team.abbreviation} ${play.homeScore}`;
+            awayScore = `${data.teams[1].team.abbreviation} ${play.awayScore}`;
         } else {
-            homeScore = data.teams[1].team.abbreviation + ' ' + play.homeScore;
-            awayScore = data.teams[0].team.abbreviation + ' ' + play.awayScore;
+            homeScore = `${data.teams[1].team.abbreviation} ${play.homeScore}`;
+            awayScore = `${data.teams[0].team.abbreviation} ${play.awayScore}`;
         }
 
-        return homeScore + " " + awayScore;
+        return `${homeScore} ${awayScore}`;
     };
 };

@@ -3,30 +3,35 @@ module.exports = function (cfb, teamId) {
     self.cfb = cfb;
     self.teamId = teamId;
 
-    self.gameCheck = function (callback) {
-        cfb.scoreboard.getScoreboard({groups: 80}, function (data) {
-            var today = new Date();
+    self.gameCheck = () => {
+        return cfb.scoreboard
+            .getScoreboard({
+                groups: 80
+            })
+            .then(getEvents);
+    };
 
-            if (data && data.events) {
-                for (eventIndex in data.events) {
-                    var event = data.events[eventIndex];
-                    var eventDate = new Date(event.date);
+    let getEvents = (data) => {
+        let today = new Date();
 
-                    if (eventDate.getFullYear() != today.getFullYear() ||
-                        eventDate.getMonth() != today.getMonth() ||
-                        eventDate.getDate() != today.getDate()) {
-                        continue;
-                    }
+        if (data && data.events) {
+            for (let event of data.events) {
+                let eventDate = new Date(event.date);
 
-                    for (competitorIndex in event.competitions[0].competitors) {
-                        var competitor = event.competitions[0].competitors[competitorIndex];
+                if (eventDate.getFullYear() != today.getFullYear() ||
+                    eventDate.getMonth() != today.getMonth() ||
+                    eventDate.getDate() != today.getDate()) {
+                    continue;
+                }
 
-                        if (competitor.team.id == self.teamId) {
-                            callback(event);
-                        }
+                for (let competitor of event.competitions[0].competitors) {
+                    if (competitor.team.id == self.teamId) {
+                        return new Promise((resolve) => resolve(event));
                     }
                 }
             }
-        });
-    };
+        }
+
+        return new Promise((resolve) => resolve(null));
+    }
 };
