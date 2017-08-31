@@ -1,53 +1,55 @@
- let schedule = require('node-schedule');
- let cfb = require('cfb-data');
- let config = require('./config/config');
- let Promise = require('bluebird');
+require('dotenv').config();
 
- let bot = require('./app/bot');
- let playService = require('./app/services/play.service');
- let tweetService = require('./app/services/tweet.service');
- let gameService = require('./app/services/game.service');
+let schedule = require('node-schedule');
+let cfb = require('cfb-data');
+let config = require('./config/config');
+let Promise = require('bluebird');
+let redis = require('redis').createClient();
 
- let gameCheckRule = new schedule.RecurrenceRule();
- gameCheckRule.hour = 1;
- gameCheckRule.minute = 0;
+let bot = require('./app/bot');
+let playService = require('./app/services/play.service');
+let tweetService = require('./app/services/tweet.service');
+let gameService = require('./app/services/game.service');
 
- let gameJob = schedule.scheduleJob(gameCheckRule, function () {
-     console.log('Checking for games today...');
+let gameCheckRule = new schedule.RecurrenceRule();
+gameCheckRule.hour = 1;
+gameCheckRule.minute = 0;
 
-     let games = new gameService(cfb, config.teamId);
-     games.gameCheck()
-         .then((event) => {
-             if (!event) {
-                 return;
-             }
+let gameJob = schedule.scheduleJob(gameCheckRule, function () {
+    console.log('Checking for games today...');
 
-             console.log('Scheduling game for today...');
+    let games = new gameService(cfb, config.teamId);
+    games.gameCheck()
+        .then((event) => {
+            if (!event) {
+                return;
+            }
 
-             let plays = new playService(cfb, event.id);
-             let tweeter = new tweetService(bot, plays, Promise);
+            console.log('Scheduling game for today...');
 
-             let hashTag = `${event.competitions[0].competitors[1].team.abbreviation}vs${event.competitions[0].competitors[0].team.abbreviation}`;
-             tweeter.setHashTag(hashTag);
+            let plays = new playService(cfb, event.id, redis, Promise);
+            let tweeter = new tweetService(bot, plays, Promise);
 
-             let eventDate = new Date(event.date);
-             let startHour = eventDate.getHours();
-             let endHour = startHour + 4;
+            let hashTag = `${event.competitions[0].competitors[1].team.abbreviation}vs${event.competitions[0].competitors[0].team.abbreviation}`;
+            tweeter.setHashTag(hashTag);
 
-             console.log(`Game tweets start at ${startHour} and end at ${endHour}`);
+            let eventDate = new Date(event.date);
+            let startHour = eventDate.getHours();
+            let endHour = startHour + 5;
 
-             let tweetRule = new schedule.RecurrenceRule();
-             tweetRule.year = eventDate.getFullYear();
-             tweetRule.month = eventDate.getMonth();
-             tweetRule.date = eventDate.getDate();
-             tweetRule.hour = new schedule.Range(startHour, endHour);
-             tweetRule.second = [0, 15, 30, 45];
+            console.log(`Game tweets start at ${startHour} and end at ${endHour}`);
 
-             let tweetJob = schedule.scheduleJob(tweetRule, function () {
-                 console.log('Looking for plays and sending tweets...');
-                 tweeter.sendTweets();
-             });
-         });
- });
+            let tweetRule = new schedule.RecurrenceRule();
+            tweetRule.year = eventDate.getFullYear();
+            tweetRule.month = eventDate.getMonth();
+            tweetRule.date = eventDate.getDate();
+            tweetRule.hour = new schedule.Range(startHour, endHour);
+            tweetRule.second = [0, 15, 30, 45];
 
- console.log('Ready to tweet!');
+            let tweetJob = schedule.scheduleJob(tweetRule, function () {
+                tweeter.sendTweets();
+            });
+        });
+});
+
+console.log('Ready to tweet!');

@@ -12,23 +12,18 @@ module.exports = function (cfb, teamId) {
     };
 
     let getEvents = (data) => {
-        let today = new Date();
+        let today = new Date().toDateString();
 
         if (data && data.events) {
-            for (let event of data.events) {
-                let eventDate = new Date(event.date);
+            let teamEvents = data.events.filter((event) => {
+                let eventDate = new Date(event.date).toDateString();
+                let isToday = eventDate == today;
+                let hasTeam = event.competitions[0].competitors.find((competitor) => competitor.team.id == self.teamId)
+                return hasTeam;
+            });
 
-                if (eventDate.getFullYear() != today.getFullYear() ||
-                    eventDate.getMonth() != today.getMonth() ||
-                    eventDate.getDate() != today.getDate()) {
-                    continue;
-                }
-
-                for (let competitor of event.competitions[0].competitors) {
-                    if (competitor.team.id == self.teamId) {
-                        return new Promise((resolve) => resolve(event));
-                    }
-                }
+            if (teamEvents && teamEvents.length > 0) {
+                return new Promise((resolve) => resolve(teamEvents[0]));
             }
         }
 

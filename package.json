@@ -1,6 +1,6 @@
 {
   "name": "michigan-pbp",
-  "version": "0.8.0",
+  "version": "1.0.0",
   "description": "Twitter bot for broadcasting play by play for Michigan football",
   "main": "index.js",
   "scripts": {
@@ -13,6 +13,7 @@
     "chai": "^3.5.0",
     "dotenv": "^4.0.0",
     "node-schedule": "^1.1.1",
+    "redis": "^2.8.0",
     "twitter": "^1.4.0"
   },
   "repository": {
