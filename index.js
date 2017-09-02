@@ -11,15 +11,6 @@ let playService = require('./app/services/play.service');
 let tweetService = require('./app/services/tweet.service');
 let gameService = require('./app/services/game.service');
 
-let gameCheckRule = new schedule.RecurrenceRule();
-gameCheckRule.hour = 1;
-gameCheckRule.minute = 0;
-
-let gameJob = schedule.scheduleJob(gameCheckRule, checkForGames);
-checkForGames();
-
-console.log('Ready to tweet!');
-
 let checkForGames = function () {
     console.log('Checking for games today...');
 
@@ -56,3 +47,12 @@ let checkForGames = function () {
             });
         });
 }
+
+let gameCheckRule = new schedule.RecurrenceRule();
+gameCheckRule.hour = 1;
+gameCheckRule.minute = 0;
+
+let gameJob = schedule.scheduleJob(gameCheckRule, checkForGames);
+checkForGames();
+
+console.log('Ready to tweet!');
