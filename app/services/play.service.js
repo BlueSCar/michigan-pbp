@@ -84,7 +84,7 @@ module.exports = function (cfb, gameId, redis, Promise) {
         }
 
         if (self.gameId) {
-            redis.set('pbpQuarter', newQuarter)
+            Promise.fromCallback((cb) => redis.set('pbpQuarter', newQuarter, cb))
                 .then(() => redis.set('pbpClockSeconds', newSeconds));
         }
 

@@ -15,7 +15,12 @@ let gameCheckRule = new schedule.RecurrenceRule();
 gameCheckRule.hour = 1;
 gameCheckRule.minute = 0;
 
-let gameJob = schedule.scheduleJob(gameCheckRule, function () {
+let gameJob = schedule.scheduleJob(gameCheckRule, checkForGames);
+checkForGames();
+
+console.log('Ready to tweet!');
+
+let checkForGames = function () {
     console.log('Checking for games today...');
 
     let games = new gameService(cfb, config.teamId);
@@ -50,6 +55,4 @@ let gameJob = schedule.scheduleJob(gameCheckRule, function () {
                 tweeter.sendTweets();
             });
         });
-});
-
-console.log('Ready to tweet!');
+}
