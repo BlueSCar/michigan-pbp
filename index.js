@@ -30,7 +30,7 @@ let checkForGames = function () {
             tweeter.setHashTag(hashTag);
 
             let eventDate = new Date(event.date);
-            let startHour = eventDate.getHours() - 4;
+            let startHour = eventDate.getHours();
             let endHour = startHour + 5;
 
             console.log(`Game tweets start at ${startHour} and end at ${endHour}`);
