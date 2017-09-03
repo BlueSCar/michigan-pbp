@@ -56,7 +56,7 @@ module.exports = function (cfb, gameId, redis, Promise) {
                         let tokens = play.clock.displayValue.split(':');
                         let playSeconds = tokens[0] * 60 + tokens[1] * 1;
 
-                        if (playQuarter > self.quarter || playSeconds < self.seconds) {
+                        if (!result.quarter || playQuarter > result.quarter || playSeconds < result.clockSeconds) {
                             if (play.type.id != 66) {
                                 let text = getPlayText(play, data);
                                 playList.push(text);
