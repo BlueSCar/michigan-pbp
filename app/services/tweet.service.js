@@ -36,7 +36,7 @@ module.exports = function (client, playService, Promise) {
             var tweets = [];
 
             for (play in plays) {
-                let results = self.trimTweet(plays[play]);
+                let results = trimTweet(plays[play]);
                 for (result in results) {
                     tweets.push(results[result]);
                 }
