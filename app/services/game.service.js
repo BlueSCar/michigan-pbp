@@ -19,7 +19,7 @@ module.exports = function (cfb, teamId) {
                 let eventDate = new Date(event.date).toDateString();
                 let isToday = eventDate == today;
                 let hasTeam = event.competitions[0].competitors.find((competitor) => competitor.team.id == self.teamId)
-                return hasTeam;
+                return isToday && hasTeam;
             });
 
             if (teamEvents && teamEvents.length > 0) {

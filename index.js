@@ -12,6 +12,7 @@ let tweetService = require('./app/services/tweet.service');
 let gameService = require('./app/services/game.service');
 
 let checkForGames = function () {
+    console.log(`Current hour is ${new Date().getHours()}`);
     console.log('Checking for games today...');
 
     let games = new gameService(cfb, config.teamId);
