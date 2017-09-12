@@ -43,7 +43,7 @@ let checkForGames = function () {
             tweetRule.hour = new schedule.Range(startHour, endHour);
             tweetRule.second = [0, 15, 30, 45];
 
-            let tweetJob = schedule.scheduleJob(tweetRule, function () {
+            let tweetJob = schedule.scheduleJob(tweetRule, () => {
                 tweeter.sendTweets();
             });
         });

@@ -69,7 +69,7 @@ module.exports = function (cfb, gameId, redis, Promise) {
                                     newSeconds = playSeconds;
                                 }
 
-                                if (play.start.team.id != play.end.team.id && play.type.id != 66) {
+                                if (play.start.team && play.end.team && play.start.team.id != play.end.team.id && play.type.id != 66) {
                                     let text = getEndOfDriveInfo(play, data);
                                     playList.push(text);
                                 }
