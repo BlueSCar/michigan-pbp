@@ -49,11 +49,11 @@ module.exports = function (client, playService, Promise) {
                     return Promise.fromCallback((cb) => self.client.post('statuses/update', {
                             status: tweets[index - 1]
                         }, cb))
-                        .then(getNext)
                         .catch((err) => {
                             console.log(err);
                             console.log(tweets[index - 1]);
-                        });
+                        })
+                        .then(getNext);
                 } else {
                     return new Promise((resolve) => resolve({}));
                 }
